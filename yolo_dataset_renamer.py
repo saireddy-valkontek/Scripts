@@ -2,10 +2,18 @@ import os
 import shutil
 
 # Set paths
-image_folder = r"C:\Users\valkontek005\Downloads\Output_Files_From_Apex - Copy\Sample_HD_THERMAL-50-Images.v1i.kitti-segmentation\train"
-label_folder = r"C:\Users\valkontek005\Downloads\Output_Files_From_Apex - Copy\Sample_HD_THERMAL-50-Images.v1i.kitti-segmentation\train"
+image_folder = r"C:\Users\valkontek005\Data\windshield\valid\images"
+label_folder = r"C:\Users\valkontek005\Data\windshield\valid\labels"
 
 image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff')
+
+# Ask for starting number
+while True:
+    try:
+        start_number = int(input("Enter the starting number for renaming: "))
+        break
+    except ValueError:
+        print("Invalid input. Please enter a whole number.")
 
 # Get all image files
 image_files = [f for f in os.listdir(image_folder) if f.lower().endswith(image_extensions)]
@@ -25,8 +33,9 @@ for idx, file in enumerate(image_files):
         os.rename(label_path, os.path.join(label_folder, temp_label_name))
 
 # Step 2: Rename temp files to final names
-temp_image_files = sorted([f for f in os.listdir(image_folder) if f.startswith("temp_")])
-for idx, file in enumerate(temp_image_files, start=0):
+temp_image_files = sorted([f for f in os.listdir(image_folder) if f.startswith("temp_")],
+                           key=lambda x: int(os.path.splitext(x)[0].split("_")[1]))
+for idx, file in enumerate(temp_image_files, start=start_number):
     name, ext = os.path.splitext(file)
     final_image_name = f"{idx}{ext}"
     final_label_name = f"{idx}.txt"

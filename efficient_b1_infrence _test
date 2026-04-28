@@ -1,0 +1,124 @@
+import torch
+import torch.nn as nn
+from PIL import Image
+from torchvision import transforms, models
+import matplotlib.pyplot as plt
+
+# =====================================================
+# CONFIG
+# =====================================================
+MODEL_PATH = r"C:\Users\valkontek005\Downloads\multihead_effb1_best (2).pth"
+IMAGE_PATH = r"C:\Users\valkontek005\Code\Scripts\image.png"
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# =====================================================
+# LOAD CHECKPOINT
+# =====================================================
+ckpt = torch.load(MODEL_PATH, map_location=DEVICE)
+
+BRANDS = ckpt["brands"]
+MODELS = ckpt["models"]
+IMG_SIZE = ckpt.get("img_size", 240)
+
+# =====================================================
+# MODEL
+# =====================================================
+class MultiHeadEffNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        base = models.efficientnet_b1(weights=None)
+
+        self.features = base.features
+        self.pool = nn.AdaptiveAvgPool2d(1)
+
+        self.brand_head = nn.Linear(1280, len(BRANDS))
+        self.model_head = nn.Linear(1280, len(MODELS))
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.pool(x)
+        x = torch.flatten(x, 1)
+
+        brand = self.brand_head(x)
+        model = self.model_head(x)
+
+        return brand, model
+
+# =====================================================
+# LOAD MODEL
+# =====================================================
+model = MultiHeadEffNet().to(DEVICE)
+model.load_state_dict(ckpt["state_dict"])
+model.eval()
+
+print("Model Loaded Successfully")
+
+# =====================================================
+# TRANSFORM
+# =====================================================
+tf = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(IMG_SIZE),
+    transforms.ToTensor()
+])
+
+# =====================================================
+# LOAD IMAGE
+# =====================================================
+img = Image.open(IMAGE_PATH).convert("RGB")
+x = tf(img).unsqueeze(0).to(DEVICE)
+
+# =====================================================
+# INFERENCE
+# =====================================================
+with torch.no_grad():
+
+    brand_out, model_out = model(x)
+
+    brand_prob = torch.softmax(brand_out, dim=1)
+    model_prob = torch.softmax(model_out, dim=1)
+
+    brand_idx = brand_prob.argmax(1).item()
+    model_idx = model_prob.argmax(1).item()
+
+    brand_conf = brand_prob[0, brand_idx].item() * 100
+    model_conf = model_prob[0, model_idx].item() * 100
+
+# =====================================================
+# TOP 3 MODEL PREDICTIONS
+# =====================================================
+top_vals, top_ids = torch.topk(model_prob, 3)
+
+brand_name = BRANDS[brand_idx]
+model_name = MODELS[model_idx]
+
+# =====================================================
+# SHOW IMAGE
+# =====================================================
+plt.figure(figsize=(8, 8))
+plt.imshow(img)
+plt.axis("off")
+
+plt.title(
+    f"Brand: {brand_name} ({brand_conf:.2f}%)\n"
+    f"Model: {model_name} ({model_conf:.2f}%)",
+    fontsize=14
+)
+
+plt.show()
+
+# =====================================================
+# PRINT RESULTS
+# =====================================================
+print("=" * 40)
+print("FINAL PREDICTION")
+print("=" * 40)
+
+print(f"Brand : {brand_name} ({brand_conf:.2f}%)")
+print(f"Model : {model_name} ({model_conf:.2f}%)")
+
+print("\nTop 3 Model Predictions:")
+for score, idx in zip(top_vals[0], top_ids[0]):
+    print(f"{MODELS[idx.item()]} : {score.item() * 100:.2f}%")

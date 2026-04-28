@@ -1,9 +1,9 @@
 import os
 
 # Path to your folder
-folder_path = r"C:\Users\valkontek005\Downloads\car dent images - Google Search"
+folder_path = r"C:\Users\valkontek005\Downloads\car brand and model detection\Hyundai\Verna"
 
-start_number = 1  
+start_number = 1
 
 files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
 files.sort() 
@@ -23,4 +23,4 @@ for i, (temp_name, ext) in enumerate(temp_names, start=start_number):
     src = os.path.join(folder_path, temp_name)
     dst = os.path.join(folder_path, f"{i}{ext}")
     os.rename(src, dst)
-    print(f"Renamed: {temp_name} → {i}{ext}"
+    print(f"Renamed: {temp_name} → {i}{ext}")
