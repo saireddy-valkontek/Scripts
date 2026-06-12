@@ -1,3 +1,8 @@
 venv/
 .venv/
 .idea/
+output/
+jpg_images/
+accepted_crops/
+__pycache__/
+yolov8m.pt

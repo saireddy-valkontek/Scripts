@@ -1,3 +1,5 @@
+import os
+import sys
 import torch
 import torch.nn as nn
 from PIL import Image
@@ -9,6 +11,20 @@ import matplotlib.pyplot as plt
 # =====================================================
 MODEL_PATH = r"C:\Users\valkontek005\Downloads\multihead_effb1_best (2).pth"
 IMAGE_PATH = r"C:\Users\valkontek005\Code\Scripts\image.png"
+
+# Fallback to local paths if absolute paths do not exist
+if not os.path.exists(MODEL_PATH):
+    MODEL_PATH = os.path.join(".", "multihead_effb1_best (2).pth")
+if not os.path.exists(IMAGE_PATH):
+    IMAGE_PATH = os.path.join(".", "image.png")
+
+if not os.path.exists(MODEL_PATH):
+    print(f"❌ Model checkpoint file not found: {MODEL_PATH}")
+    sys.exit(1)
+
+if not os.path.exists(IMAGE_PATH):
+    print(f"❌ Target image file not found: {IMAGE_PATH}")
+    sys.exit(1)
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -61,7 +77,8 @@ print("Model Loaded Successfully")
 tf = transforms.Compose([
     transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
-    transforms.ToTensor()
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
 # =====================================================

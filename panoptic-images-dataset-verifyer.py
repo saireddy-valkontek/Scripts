@@ -7,6 +7,11 @@ from tqdm import tqdm
 
 # ==== CONFIG ====
 DATASET_DIR = r"C:\Users\valkontek005\Downloads\Output_Files_From_Apex-20251030T111035Z-1-001\Output_Files_From_Apex\Sample_RGB_50-Images.v1i.kitti-segmentation\train"
+
+# Fallback to local path if not found
+if not os.path.exists(DATASET_DIR):
+    DATASET_DIR = os.path.join(".", "train")
+
 FLAGGED_DIR = os.path.join(DATASET_DIR, "flagged")
 IMG_EXTENSIONS = [".jpg", ".jpeg", ".png"]
 
@@ -60,6 +65,9 @@ class DatasetReviewer:
         self.bprev.on_clicked(self.prev_image)
         self.bflag.on_clicked(self.flag_image)
 
+        # Connect keyboard events
+        self.fig.canvas.mpl_connect("key_press_event", self.on_key)
+
         self.show_image()
 
     def show_image(self):
@@ -78,6 +86,9 @@ class DatasetReviewer:
         img = cv2.imread(img_path)
         if img is None:
             print(f"⚠️ Could not load {img_path}")
+            self.ax.text(0.5, 0.5, f"Could not load image:\n{img_name}",
+                         ha="center", va="center", fontsize=16, color="red")
+            plt.draw()
             return
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -122,6 +133,14 @@ class DatasetReviewer:
         if self.index >= self.total:
             self.index = max(0, self.total - 1)
         self.show_image()
+
+    def on_key(self, event):
+        if event.key in ("right", "d"):
+            self.next_image()
+        elif event.key in ("left", "a"):
+            self.prev_image()
+        elif event.key == "f":
+            self.flag_image()
 
 
 def main():

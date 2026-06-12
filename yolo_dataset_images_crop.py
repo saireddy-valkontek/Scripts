@@ -17,6 +17,9 @@ def crop_and_create_new_dataset(image_folder, label_folder, output_folder):
             # Read the image
             image_path = os.path.join(image_folder, image_name)
             image = cv2.imread(image_path)
+            if image is None:
+                print(f"⚠️ Could not load image {image_name}, skipping...")
+                continue
 
             # Remove the extension and handle the filename correctly
             base_name = os.path.splitext(image_name)[0]
@@ -38,6 +41,8 @@ def crop_and_create_new_dataset(image_folder, label_folder, output_folder):
             for i, label in enumerate(labels):
                 # Parse the label: class_id center_x center_y width height
                 parts = label.strip().split()
+                if len(parts) < 5:
+                    continue
                 class_id = int(parts[0])
                 center_x = float(parts[1])
                 center_y = float(parts[2])
@@ -46,16 +51,16 @@ def crop_and_create_new_dataset(image_folder, label_folder, output_folder):
 
                 # Convert YOLO coordinates to pixel values
                 image_height, image_width, _ = image.shape
-                x_min = int((center_x - width / 2) * image_width)
-                x_max = int((center_x + width / 2) * image_width)
-                y_min = int((center_y - height / 2) * image_height)
-                y_max = int((center_y + height / 2) * image_height)
+                x_min = max(0, int((center_x - width / 2) * image_width))
+                x_max = min(image_width, int((center_x + width / 2) * image_width))
+                y_min = max(0, int((center_y - height / 2) * image_height))
+                y_max = min(image_height, int((center_y + height / 2) * image_height))
 
                 # Crop the character from the image
                 cropped_image = image[y_min:y_max, x_min:x_max]
 
                 # Check if cropping results in a valid region
-                if cropped_image.shape[0] > 0 and cropped_image.shape[1] > 0:
+                if cropped_image is not None and cropped_image.shape[0] > 0 and cropped_image.shape[1] > 0:
                     # Save the cropped image
                     cropped_image_name = f"{base_name}_{i}.jpg"
                     cropped_image_path = os.path.join(output_folder, "images", cropped_image_name)
@@ -86,6 +91,14 @@ def crop_and_create_new_dataset(image_folder, label_folder, output_folder):
 image_folder = r"C:\Users\saireddy\Desktop\Local_Files\debossed_dataset_for_fine_tuning\test\images"  # Folder containing original images
 label_folder = r"C:\Users\saireddy\Desktop\Local_Files\debossed_dataset_for_fine_tuning\test\labels"  # Folder containing YOLO label files
 output_folder = r"C:\Users\saireddy\Desktop\Local_Files\debossed_dataset\test"  # Folder to save cropped images and labels
+
+# Fallbacks for local execution
+if not os.path.exists(image_folder):
+    image_folder = os.path.join(".", "test", "images")
+if not os.path.exists(label_folder):
+    label_folder = os.path.join(".", "test", "labels")
+if not os.path.exists(os.path.dirname(output_folder)):
+    output_folder = os.path.join(".", "debossed_dataset", "test")
 
 # Call the function to process the dataset
 crop_and_create_new_dataset(image_folder, label_folder, output_folder)

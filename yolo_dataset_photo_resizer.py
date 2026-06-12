@@ -29,7 +29,12 @@ if __name__ == "__main__":
     # Option 1: Hardcoded path
     folder_path = r"C:\Users\saireddy\Desktop\chassis_numbers\chassis_numbers-v1"
 
-    # Option 2: User input
-    # folder_path = input("Enter folder path: ").strip()
+    # Fallback to local if not found
+    if not os.path.exists(folder_path):
+        folder_path = os.path.join(".", "chassis_numbers")
+
+    # Option 2: User input (fallback if local folder doesn't exist either)
+    if not os.path.exists(folder_path):
+        folder_path = input("Enter folder path: ").strip()
 
     resize_images_in_folder(folder_path)

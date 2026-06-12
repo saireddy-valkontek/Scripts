@@ -12,19 +12,20 @@ from ultralytics import YOLO
 # ========== CONFIG ==========
 class Config:
     """Configuration settings for the YOLO training pipeline."""
-    WORKING_DIR = Path("/kaggle/working")
+    WORKING_DIR = Path("/kaggle/working") if os.path.exists("/kaggle/working") else Path("./workspace")
     ZIP_PATH = WORKING_DIR / "yolo_dataset.zip"
     EXTRACT_DIR = WORKING_DIR / "yolo_data"
     YAML_PATH = EXTRACT_DIR / "data.yaml"
     MODEL_PATH = "yolov8n.pt"
     DATASET_URL = "https://drive.google.com/file/d/1cVks8umjCqEUKESH3YGKGZUvUze2rcRW/view?usp=sharing"
-    WORKERS = min(4, os.cpu_count() // 2)
+    WORKERS = min(4, os.cpu_count() // 2) if os.cpu_count() is not None else 2
 
 # ========== HELPERS ==========
 def clear_working_directory():
     """Clean the working directory while preserving input/lib."""
     print("🧹 Clearing working directory...")
     working_dir = Config.WORKING_DIR
+    working_dir.mkdir(parents=True, exist_ok=True)
 
     for filename in os.listdir(working_dir):
         file_path = os.path.join(working_dir, filename)

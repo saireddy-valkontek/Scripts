@@ -129,7 +129,11 @@ def transfer(src: Path, dst: Path, use_copy: bool) -> None:
     else:
         if dst.exists() or dst.is_symlink():
             dst.unlink()
-        dst.symlink_to(src.resolve())
+        try:
+            dst.symlink_to(src.resolve())
+        except OSError as e:
+            # Fall back to copying if symlink fails (e.g. Windows permission/privilege error)
+            shutil.copy2(src, dst)
 
 
 def unique_stem(stem: str, existing: set[str], dataset_idx: int) -> str:
@@ -278,7 +282,7 @@ if __name__ == "__main__":
     )
     
     
-"""
+r"""
 run command :
 python C:\Users\valkontek005\Downloads\combine_yolo_datasets.py `
   --datasets C:\Users\valkontek005\Data\dent `
